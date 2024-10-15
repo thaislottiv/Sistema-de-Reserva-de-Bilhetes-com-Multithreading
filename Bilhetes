@@ -1,0 +1,56 @@
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+class ReservaDeBilhetes {
+    private int assentosDisponiveis = 10; // Quantidade de assentos no evento
+    private final Lock lock = new ReentrantLock();
+
+    public boolean reservarAssento(String nome, int quantidade) {
+        lock.lock(); // Impede que outro thread faça reservas ao mesmo tempo
+        try {
+            if (assentosDisponiveis >= quantidade) {
+                System.out.println(nome + " reservou " + quantidade + " assento(s).");
+                assentosDisponiveis -= quantidade;
+                System.out.println("Assentos restantes: " + assentosDisponiveis);
+                return true;
+            } else {
+                System.out.println("Assentos insuficientes para " + nome);
+                return false;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+class Cliente extends Thread {
+    private final ReservaDeBilhetes reserva;
+    private final String nome;
+    private final int assentosDesejados;
+
+    public Cliente(ReservaDeBilhetes reserva, String nome, int assentosDesejados) {
+        this.reserva = reserva;
+        this.nome = nome;
+        this.assentosDesejados = assentosDesejados;
+    }
+
+    @Override
+    public void run() {
+        reserva.reservarAssento(nome, assentosDesejados);
+    }
+}
+
+public class SistemaDeReserva {
+    public static void main(String[] args) {
+        ReservaDeBilhetes reserva = new ReservaDeBilhetes();
+
+        // Simulando vários clientes tentando reservar assentos ao mesmo tempo
+        Cliente cliente1 = new Cliente(reserva, "Thais", 5);
+        Cliente cliente2 = new Cliente(reserva, "João", 4);
+        Cliente cliente3 = new Cliente(reserva, "Maria", 3);
+
+        cliente1.start();
+        cliente2.start();
+        cliente3.start();
+    }
+}
